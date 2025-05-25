@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useForm } from "react-hook-form";
@@ -33,6 +35,395 @@ const campaignTypes = [
   { value: "engagement", label: "Content Engagement", icon: Share2, description: "Like and comment on posts automatically" },
   { value: "content", label: "Content Sharing", icon: Bot, description: "Share curated content to your timeline" },
 ];
+
+function EditCampaignDialog({ campaign, onSuccess }: { campaign?: any, onSuccess: () => void }) {
+  const [open, setOpen] = useState(false);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const form = useForm<CampaignFormData>({
+    resolver: zodResolver(campaignFormSchema),
+    defaultValues: {
+      name: campaign?.name || "",
+      type: campaign?.type || "",
+      status: campaign?.status || "active",
+      dailyLimit: campaign?.settings?.dailyLimit || 25,
+      targetRole: campaign?.settings?.targetRole || "",
+      messageTemplate: campaign?.settings?.messageTemplate || "",
+      likesPerDay: campaign?.settings?.likesPerDay || 50,
+      commentsPerDay: campaign?.settings?.commentsPerDay || 10,
+    },
+  });
+
+  const updateCampaignMutation = useMutation({
+    mutationFn: async (data: CampaignFormData) => {
+      const { dailyLimit, targetRole, messageTemplate, likesPerDay, commentsPerDay, ...campaignData } = data;
+      
+      const settings: any = {};
+      if (dailyLimit) settings.dailyLimit = dailyLimit;
+      if (targetRole) settings.targetRole = targetRole;
+      if (messageTemplate) settings.messageTemplate = messageTemplate;
+      if (likesPerDay) settings.likesPerDay = likesPerDay;
+      if (commentsPerDay) settings.commentsPerDay = commentsPerDay;
+
+      const response = await apiRequest("PATCH", `/api/campaigns/${campaign.id}`, {
+        ...campaignData,
+        settings,
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/campaigns"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
+      toast({
+        title: "Campaign Updated",
+        description: "Your automation campaign has been updated successfully.",
+      });
+      setOpen(false);
+      form.reset();
+      onSuccess();
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update automation campaign.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const selectedType = form.watch("type");
+
+  return (
+    <>
+      <Button 
+        variant="outline" 
+        size="sm"
+        onClick={() => setOpen(true)}
+      >
+        <Edit className="h-4 w-4" />
+      </Button>
+      
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-semibold text-text-primary">
+              Edit Campaign: {campaign?.name}
+            </DialogTitle>
+          </DialogHeader>
+          
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit((data) => updateCampaignMutation.mutate(data))} className="space-y-6">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Campaign Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g., Sales Outreach Q1" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="status"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Status</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="active">Active</SelectItem>
+                        <SelectItem value="paused">Paused</SelectItem>
+                        <SelectItem value="scheduled">Scheduled</SelectItem>
+                        <SelectItem value="completed">Completed</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Dynamic settings based on type */}
+              {selectedType === "connection" && (
+                <>
+                  <FormField
+                    control={form.control}
+                    name="dailyLimit"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Daily Connection Limit</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            placeholder="25" 
+                            {...field}
+                            onChange={(e) => field.onChange(parseInt(e.target.value) || undefined)}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="targetRole"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Target Role</FormLabel>
+                        <FormControl>
+                          <Input placeholder="e.g., Software Engineer, Marketing Manager" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </>
+              )}
+
+              {selectedType === "message" && (
+                <FormField
+                  control={form.control}
+                  name="messageTemplate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Message Template</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="Hi {name}, thanks for connecting!"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+
+              {selectedType === "engagement" && (
+                <>
+                  <FormField
+                    control={form.control}
+                    name="likesPerDay"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Likes Per Day</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            placeholder="50" 
+                            {...field}
+                            onChange={(e) => field.onChange(parseInt(e.target.value) || undefined)}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="commentsPerDay"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Comments Per Day</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            placeholder="10" 
+                            {...field}
+                            onChange={(e) => field.onChange(parseInt(e.target.value) || undefined)}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </>
+              )}
+
+              <div className="flex justify-end space-x-2 pt-4">
+                <Button variant="outline" type="button" onClick={() => setOpen(false)}>
+                  Cancel
+                </Button>
+                <Button 
+                  type="submit" 
+                  disabled={updateCampaignMutation.isPending}
+                  className="bg-linkedin hover:bg-linkedin/90"
+                >
+                  {updateCampaignMutation.isPending ? "Updating..." : "Update Campaign"}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
+function CampaignSettingsDialog({ campaign, onSuccess }: { campaign?: any, onSuccess: () => void }) {
+  const [open, setOpen] = useState(false);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [settings, setSettings] = useState({
+    autoSchedule: campaign?.settings?.autoSchedule || false,
+    smartTiming: campaign?.settings?.smartTiming || true,
+    skipWeekends: campaign?.settings?.skipWeekends || true,
+    maxConnections: campaign?.settings?.maxConnections || 100,
+    cooldownHours: campaign?.settings?.cooldownHours || 24,
+    enableNotifications: campaign?.settings?.enableNotifications || true,
+  });
+
+  const updateSettingsMutation = useMutation({
+    mutationFn: async (newSettings: any) => {
+      const response = await apiRequest("PATCH", `/api/campaigns/${campaign.id}`, {
+        settings: { ...campaign.settings, ...newSettings },
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/campaigns"] });
+      toast({
+        title: "Settings Updated",
+        description: "Campaign settings have been saved successfully.",
+      });
+      setOpen(false);
+      onSuccess();
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update campaign settings.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleSave = () => {
+    updateSettingsMutation.mutate(settings);
+  };
+
+  return (
+    <>
+      <Button 
+        variant="outline" 
+        size="sm"
+        onClick={() => setOpen(true)}
+      >
+        <Settings className="h-4 w-4" />
+      </Button>
+      
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-semibold text-text-primary">
+              Campaign Settings: {campaign?.name}
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-6">
+            <div className="space-y-4">
+              <h4 className="text-sm font-medium text-text-primary">Automation Rules</h4>
+              
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Auto Schedule</Label>
+                  <p className="text-xs text-text-secondary">Automatically schedule campaign actions</p>
+                </div>
+                <Switch
+                  checked={settings.autoSchedule}
+                  onCheckedChange={(checked) => setSettings({...settings, autoSchedule: checked})}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Smart Timing</Label>
+                  <p className="text-xs text-text-secondary">Optimize timing based on user activity</p>
+                </div>
+                <Switch
+                  checked={settings.smartTiming}
+                  onCheckedChange={(checked) => setSettings({...settings, smartTiming: checked})}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Skip Weekends</Label>
+                  <p className="text-xs text-text-secondary">Pause automation on weekends</p>
+                </div>
+                <Switch
+                  checked={settings.skipWeekends}
+                  onCheckedChange={(checked) => setSettings({...settings, skipWeekends: checked})}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <h4 className="text-sm font-medium text-text-primary">Limits & Safety</h4>
+              
+              <div className="space-y-2">
+                <Label>Maximum Daily Connections</Label>
+                <Input
+                  type="number"
+                  value={settings.maxConnections}
+                  onChange={(e) => setSettings({...settings, maxConnections: parseInt(e.target.value) || 0})}
+                  className="w-full"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Cooldown Period (hours)</Label>
+                <Input
+                  type="number"
+                  value={settings.cooldownHours}
+                  onChange={(e) => setSettings({...settings, cooldownHours: parseInt(e.target.value) || 0})}
+                  className="w-full"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <h4 className="text-sm font-medium text-text-primary">Notifications</h4>
+              
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Enable Notifications</Label>
+                  <p className="text-xs text-text-secondary">Get updates about campaign progress</p>
+                </div>
+                <Switch
+                  checked={settings.enableNotifications}
+                  onCheckedChange={(checked) => setSettings({...settings, enableNotifications: checked})}
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end space-x-2 pt-4">
+              <Button variant="outline" onClick={() => setOpen(false)}>
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleSave}
+                disabled={updateSettingsMutation.isPending}
+                className="bg-linkedin hover:bg-linkedin/90"
+              >
+                {updateSettingsMutation.isPending ? "Saving..." : "Save Settings"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
 
 function CreateAutomationDialog({ onSuccess }: { onSuccess: () => void }) {
   const [open, setOpen] = useState(false);
@@ -398,32 +789,20 @@ export default function Automation() {
                           {campaign.status === 'active' ? 'Pause' : 'Start'}
                         </Button>
                         
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => {
-                            toast({
-                              title: "Edit Campaign",
-                              description: "Campaign editing feature coming soon!",
-                            });
-                          }}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
+                        <EditCampaignDialog 
+                          campaign={campaign} 
+                          onSuccess={() => {
+                            // Refresh campaigns list
+                          }} 
+                        />
                       </div>
                       
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => {
-                          toast({
-                            title: "Campaign Settings",
-                            description: "Advanced settings panel coming soon!",
-                          });
-                        }}
-                      >
-                        <Settings className="h-4 w-4" />
-                      </Button>
+                      <CampaignSettingsDialog 
+                        campaign={campaign} 
+                        onSuccess={() => {
+                          // Refresh campaigns list
+                        }} 
+                      />
                     </div>
                   </div>
                 </CardContent>
