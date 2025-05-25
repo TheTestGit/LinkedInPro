@@ -50,8 +50,9 @@ export default function Settings() {
       </div>
 
       <Tabs defaultValue="profile" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4 max-w-md">
+        <TabsList className="grid w-full grid-cols-5 max-w-2xl">
           <TabsTrigger value="profile">Profile</TabsTrigger>
+          <TabsTrigger value="linkedin">LinkedIn</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
           <TabsTrigger value="automation">Automation</TabsTrigger>
           <TabsTrigger value="data">Data</TabsTrigger>
@@ -109,6 +110,51 @@ export default function Settings() {
               <Button variant="outline">
                 Update Password
               </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="linkedin" className="space-y-6">
+          <Card className="shadow-sm border-gray-200">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <User className="h-5 w-5" />
+                <span>LinkedIn Account Connection</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-linkedin rounded-lg flex items-center justify-center">
+                    <User className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-text-primary">LinkedIn Account</h4>
+                    <p className="text-sm text-text-secondary">Connect your LinkedIn account to enable automation</p>
+                  </div>
+                </div>
+                <Badge className="bg-destructive/10 text-destructive">Not Connected</Badge>
+              </div>
+              
+              <div className="space-y-4">
+                <div>
+                  <h4 className="font-medium text-text-primary mb-2">Connection Benefits</h4>
+                  <ul className="text-sm text-text-secondary space-y-1">
+                    <li>• Send automated connection requests</li>
+                    <li>• Schedule and publish content</li>
+                    <li>• Engage with your network automatically</li>
+                    <li>• Access real-time analytics and insights</li>
+                  </ul>
+                </div>
+                
+                <Button className="bg-linkedin hover:bg-linkedin/90 text-white">
+                  Connect LinkedIn Account
+                </Button>
+                
+                <div className="text-xs text-text-secondary">
+                  <p>We use secure OAuth 2.0 authentication. Your LinkedIn credentials are never stored on our servers.</p>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

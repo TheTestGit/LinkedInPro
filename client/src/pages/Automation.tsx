@@ -45,7 +45,11 @@ function CreateAutomationDialog({ onSuccess }: { onSuccess: () => void }) {
       name: "",
       type: "",
       status: "active",
-      settings: {},
+      dailyLimit: 25,
+      targetRole: "",
+      messageTemplate: "",
+      likesPerDay: 50,
+      commentsPerDay: 10,
     },
   });
 
