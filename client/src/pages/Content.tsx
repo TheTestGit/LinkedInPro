@@ -69,14 +69,36 @@ function CreateContentDialog() {
     },
   });
 
-  const onSubmit = (data: ContentFormData) => {
-    console.log("Creating content:", data);
-    toast({
-      title: "Content Scheduled",
-      description: "Your post has been scheduled successfully.",
-    });
-    setOpen(false);
-    form.reset();
+  const onSubmit = async (data: ContentFormData) => {
+    try {
+      const scheduledDate = new Date(data.scheduledFor);
+      const now = new Date();
+      
+      if (scheduledDate <= now) {
+        toast({
+          title: "Invalid Date",
+          description: "Please select a future date and time.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Simulate content creation
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      toast({
+        title: "Content Scheduled",
+        description: `Your ${data.type} post has been scheduled for ${scheduledDate.toLocaleDateString()} at ${scheduledDate.toLocaleTimeString()}.`,
+      });
+      setOpen(false);
+      form.reset();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to schedule content. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (

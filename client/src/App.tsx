@@ -10,6 +10,8 @@ import Analytics from "@/pages/Analytics";
 import Connections from "@/pages/Connections";
 import Content from "@/pages/Content";
 import Settings from "@/pages/Settings";
+import Support from "@/pages/Support";
+import Login from "@/pages/Login";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -22,6 +24,8 @@ function Router() {
         <Route path="/connections" component={Connections} />
         <Route path="/content" component={Content} />
         <Route path="/settings" component={Settings} />
+        <Route path="/support" component={Support} />
+        <Route path="/login" component={Login} />
         <Route component={NotFound} />
       </Switch>
     </Layout>
