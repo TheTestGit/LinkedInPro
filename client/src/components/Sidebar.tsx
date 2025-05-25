@@ -11,6 +11,7 @@ import {
   TrendingUp, 
   Settings, 
   HelpCircle,
+  LogOut,
   ChevronLeft,
   ChevronRight
 } from "lucide-react";
@@ -159,11 +160,25 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
                 {user?.email || ''}
               </p>
             </div>
-            <Link href="/settings">
-              <Button variant="ghost" size="sm" className="p-1">
-                <Settings className="h-4 w-4 text-text-secondary" />
+            <div className="flex items-center space-x-1">
+              <Link href="/settings">
+                <Button variant="ghost" size="sm" className="p-1">
+                  <Settings className="h-4 w-4 text-text-secondary" />
+                </Button>
+              </Link>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="p-1"
+                onClick={() => {
+                  if (confirm("Are you sure you want to logout?")) {
+                    window.location.href = "/login";
+                  }
+                }}
+              >
+                <LogOut className="h-4 w-4 text-text-secondary" />
               </Button>
-            </Link>
+            </div>
           </div>
         </div>
       )}

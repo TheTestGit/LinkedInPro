@@ -156,7 +156,13 @@ export default function Connections() {
           </p>
         </div>
         
-        <Button className="bg-linkedin hover:bg-linkedin/90 text-white">
+        <Button 
+          className="bg-linkedin hover:bg-linkedin/90 text-white"
+          onClick={() => {
+            // Simulate finding new connections
+            alert("This would open LinkedIn's connection suggestions or search interface. In a real app, this would integrate with LinkedIn's API to show potential connections based on your industry, location, and mutual connections.");
+          }}
+        >
           <UserPlus className="h-4 w-4 mr-2" />
           Find Connections
         </Button>
