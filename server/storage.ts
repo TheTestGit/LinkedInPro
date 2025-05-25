@@ -15,6 +15,8 @@ import {
   type ActivityLog,
   type InsertActivityLog
 } from "@shared/schema";
+import { db } from "./db";
+import { eq, desc, and } from "drizzle-orm";
 
 export interface IStorage {
   // Users
@@ -315,4 +317,123 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+export class DatabaseStorage implements IStorage {
+  async getUser(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user || undefined;
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values(insertUser)
+      .returning();
+    return user;
+  }
+
+  async getCampaignsByUserId(userId: number): Promise<AutomationCampaign[]> {
+    return await db.select().from(automationCampaigns).where(eq(automationCampaigns.userId, userId));
+  }
+
+  async getCampaign(id: number): Promise<AutomationCampaign | undefined> {
+    const [campaign] = await db.select().from(automationCampaigns).where(eq(automationCampaigns.id, id));
+    return campaign || undefined;
+  }
+
+  async createCampaign(insertCampaign: InsertAutomationCampaign): Promise<AutomationCampaign> {
+    const [campaign] = await db
+      .insert(automationCampaigns)
+      .values(insertCampaign)
+      .returning();
+    return campaign;
+  }
+
+  async updateCampaign(id: number, updates: Partial<AutomationCampaign>): Promise<AutomationCampaign | undefined> {
+    const [campaign] = await db
+      .update(automationCampaigns)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(automationCampaigns.id, id))
+      .returning();
+    return campaign || undefined;
+  }
+
+  async getTasksByCampaignId(campaignId: number): Promise<AutomationTask[]> {
+    return await db.select().from(automationTasks).where(eq(automationTasks.campaignId, campaignId));
+  }
+
+  async getTasksByUserId(userId: number): Promise<AutomationTask[]> {
+    const userCampaigns = await this.getCampaignsByUserId(userId);
+    const campaignIds = userCampaigns.map(c => c.id);
+    if (campaignIds.length === 0) return [];
+    
+    return await db.select().from(automationTasks).where(eq(automationTasks.campaignId, campaignIds[0])); // simplified for now
+  }
+
+  async createTask(insertTask: InsertAutomationTask): Promise<AutomationTask> {
+    const [task] = await db
+      .insert(automationTasks)
+      .values(insertTask)
+      .returning();
+    return task;
+  }
+
+  async updateTask(id: number, updates: Partial<AutomationTask>): Promise<AutomationTask | undefined> {
+    const [task] = await db
+      .update(automationTasks)
+      .set(updates)
+      .where(eq(automationTasks.id, id))
+      .returning();
+    return task || undefined;
+  }
+
+  async getAnalyticsByUserId(userId: number): Promise<Analytics[]> {
+    return await db.select().from(analytics).where(eq(analytics.userId, userId)).orderBy(desc(analytics.date));
+  }
+
+  async getAnalyticsByDate(userId: number, date: string): Promise<Analytics | undefined> {
+    const [analytic] = await db.select().from(analytics)
+      .where(and(eq(analytics.userId, userId), eq(analytics.date, date)));
+    return analytic || undefined;
+  }
+
+  async createOrUpdateAnalytics(insertAnalytics: InsertAnalytics): Promise<Analytics> {
+    const existing = await this.getAnalyticsByDate(insertAnalytics.userId, insertAnalytics.date);
+    
+    if (existing) {
+      const [updated] = await db
+        .update(analytics)
+        .set(insertAnalytics)
+        .where(eq(analytics.id, existing.id))
+        .returning();
+      return updated;
+    } else {
+      const [created] = await db
+        .insert(analytics)
+        .values(insertAnalytics)
+        .returning();
+      return created;
+    }
+  }
+
+  async getActivityLogByUserId(userId: number, limit = 10): Promise<ActivityLog[]> {
+    return await db.select().from(activityLog)
+      .where(eq(activityLog.userId, userId))
+      .orderBy(desc(activityLog.createdAt))
+      .limit(limit);
+  }
+
+  async createActivityLog(insertActivity: InsertActivityLog): Promise<ActivityLog> {
+    const [activity] = await db
+      .insert(activityLog)
+      .values(insertActivity)
+      .returning();
+    return activity;
+  }
+}
+
+export const storage = new DatabaseStorage();
