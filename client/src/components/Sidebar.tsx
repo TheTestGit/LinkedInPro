@@ -159,9 +159,11 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
                 {user?.email || ''}
               </p>
             </div>
-            <Button variant="ghost" size="sm" className="p-1">
-              <Settings className="h-4 w-4 text-text-secondary" />
-            </Button>
+            <Link href="/settings">
+              <Button variant="ghost" size="sm" className="p-1">
+                <Settings className="h-4 w-4 text-text-secondary" />
+              </Button>
+            </Link>
           </div>
         </div>
       )}

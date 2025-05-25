@@ -147,7 +147,15 @@ export default function Settings() {
                   </ul>
                 </div>
                 
-                <Button className="bg-linkedin hover:bg-linkedin/90 text-white">
+                <Button 
+                  className="bg-linkedin hover:bg-linkedin/90 text-white"
+                  onClick={() => {
+                    toast({
+                      title: "LinkedIn Connection",
+                      description: "This would open LinkedIn OAuth flow in a real application. Connection simulation complete!",
+                    });
+                  }}
+                >
                   Connect LinkedIn Account
                 </Button>
                 

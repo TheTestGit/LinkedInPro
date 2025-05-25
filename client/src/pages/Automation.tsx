@@ -398,12 +398,30 @@ export default function Automation() {
                           {campaign.status === 'active' ? 'Pause' : 'Start'}
                         </Button>
                         
-                        <Button variant="outline" size="sm">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => {
+                            toast({
+                              title: "Edit Campaign",
+                              description: "Campaign editing feature coming soon!",
+                            });
+                          }}
+                        >
                           <Edit className="h-4 w-4" />
                         </Button>
                       </div>
                       
-                      <Button variant="outline" size="sm">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => {
+                          toast({
+                            title: "Campaign Settings",
+                            description: "Advanced settings panel coming soon!",
+                          });
+                        }}
+                      >
                         <Settings className="h-4 w-4" />
                       </Button>
                     </div>
