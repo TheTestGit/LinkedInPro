@@ -10,7 +10,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useForm } from "react-hook-form";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Calendar, Share2, Edit, Trash2, Clock, CheckCircle, Send } from "lucide-react";
+import { Plus, Calendar, Share2, Edit, Trash2, Clock, CheckCircle, Send, ChevronLeft, ChevronRight } from "lucide-react";
 
 // Sample content data
 const scheduledPosts = [
@@ -288,7 +288,7 @@ function PostCard({ post, isScheduled = false }: { post: any, isScheduled?: bool
 }
 
 export default function Content() {
-  const [activeTab, setActiveTab] = useState("scheduled");
+  const [activeTab, setActiveTab] = useState("calendar");
 
   return (
     <div className="p-8">
@@ -301,7 +301,10 @@ export default function Content() {
         </div>
         
         <div className="flex items-center space-x-4">
-          <Button variant="outline">
+          <Button 
+            variant="outline"
+            onClick={() => setActiveTab("calendar")}
+          >
             <Calendar className="h-4 w-4 mr-2" />
             Content Calendar
           </Button>
@@ -379,11 +382,80 @@ export default function Content() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3 max-w-md">
+        <TabsList className="grid w-full grid-cols-4 max-w-lg">
+          <TabsTrigger value="calendar">Calendar</TabsTrigger>
           <TabsTrigger value="scheduled">Scheduled</TabsTrigger>
           <TabsTrigger value="published">Published</TabsTrigger>
           <TabsTrigger value="drafts">Drafts</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="calendar" className="space-y-4">
+          <Card className="shadow-sm border-gray-200">
+            <CardHeader className="pb-4">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-xl">Content Calendar</CardTitle>
+                <div className="flex items-center space-x-2">
+                  <Button variant="outline" size="sm">
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <span className="text-sm font-medium px-3">May 2025</span>
+                  <Button variant="outline" size="sm">
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {/* Calendar Grid */}
+              <div className="grid grid-cols-7 gap-1">
+                {/* Header */}
+                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
+                  <div key={day} className="p-3 text-center text-sm font-medium text-text-secondary">
+                    {day}
+                  </div>
+                ))}
+                
+                {/* Calendar Days */}
+                {Array.from({ length: 35 }, (_, index) => {
+                  const dayNumber = index - 6; // May 1st starts on Thursday (index 4)
+                  const isCurrentMonth = dayNumber > 0 && dayNumber <= 31;
+                  const isToday = dayNumber === 25; // Today is May 25th
+                  const hasPost = [5, 12, 18, 25, 29].includes(dayNumber); // Sample scheduled dates
+                  
+                  return (
+                    <div
+                      key={index}
+                      className={`
+                        min-h-[80px] p-2 border border-gray-100 relative
+                        ${isCurrentMonth ? 'bg-white hover:bg-gray-50' : 'bg-gray-50'}
+                        ${isToday ? 'bg-linkedin/5 border-linkedin' : ''}
+                      `}
+                    >
+                      {isCurrentMonth && (
+                        <>
+                          <div className={`text-sm ${isToday ? 'font-semibold text-linkedin' : 'text-text-primary'}`}>
+                            {dayNumber}
+                          </div>
+                          {hasPost && (
+                            <div className="mt-1">
+                              <div className="w-2 h-2 bg-linkedin rounded-full mb-1"></div>
+                              <div className="text-xs text-text-secondary truncate">
+                                {dayNumber === 5 ? 'Industry Insights' : 
+                                 dayNumber === 12 ? 'Team Update' :
+                                 dayNumber === 18 ? 'Product Launch' :
+                                 dayNumber === 25 ? 'Weekly Roundup' : 'Networking Post'}
+                              </div>
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         <TabsContent value="scheduled" className="space-y-4">
           <div className="grid grid-cols-1 gap-4">
